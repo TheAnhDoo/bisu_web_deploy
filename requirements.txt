@@ -1,4 +1,5 @@
 flask
+gunicorn
 flask-login
 web3
 pandas
@@ -8,4 +9,4 @@ logging
 eth-account
 flask-wtf
 flask-sqlalchemy
-
+openpyxl
