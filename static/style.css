@@ -1,0 +1,537 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle at 20% 30%, #0D0D0D, #1A1A1A 70%), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 800"><circle cx="200" cy="200" r="50" fill="rgba(255,215,0,0.02)"/><circle cx="800" cy="600" r="80" fill="rgba(0,196,180,0.02)"/></svg>');
+    background-size: cover;
+    color: #D3D3D3;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Particle Animation (Cosmic Dust) */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.01) 1%, transparent 20%) repeat;
+    animation: floatParticles 20s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes floatParticles {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-50px) rotate(360deg); }
+}
+
+/* Main Container */
+main {
+    flex: 1 0 auto;
+    padding: 180px 0 80px;
+    position: relative;
+    z-index: 1;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    position: relative;
+}
+
+/* Card Styling */
+.card {
+    background: linear-gradient(135deg, #222222, #1C1C1C);
+    border-radius: 24px;
+    padding: 30px;
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(255, 215, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.4s ease;
+    backdrop-filter: blur(5px);
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0, 196, 180, 0.05) 0%, transparent 70%);
+    opacity: 0.3;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(255, 215, 0, 0.1);
+}
+
+/* Heading Styles with Admin/User Distinction */
+.admin-view .card h2 {
+    color: #FFD700; /* Gold for admin */
+}
+
+.user-view .card h2 {
+    color: #00C4B4; /* Teal for regular users */
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: rgb(255,215,0);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3), 0 0 16px rgba(255, 215, 0, 0.1);
+}
+
+h1 { font-size: 56px; margin-bottom: 40px; }
+h2 { font-size: 36px; }
+h4 { font-size: 22px; }
+
+/* Form Elements */
+.form-control {
+    background: #1A1A1A;
+    color: #E0E0E0;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 16px;
+    padding: 16px 20px;
+    font-size: 16px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+.form-control:focus {
+    border-color: #00C4B4;
+    box-shadow: 0 0 12px rgba(0, 196, 180, 0.4), inset 0 0 8px rgba(0, 196, 180, 0.2);
+    outline: none;
+    background: #1A1A1A;
+    color: #FFFFFF;
+}
+
+.form-control::placeholder {
+    color: #A0A0A0;
+    opacity: 1;
+    font-style: italic;
+}
+
+.form-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+/* Sort User Dropdown (Admin-Only) */
+#sortUser {
+    background: #2D2D2D; /* Slightly lighter background */
+    border-color: #FFD700;
+    color: #FFFFFF;
+}
+
+#sortUser:hover,
+#sortUser:focus {
+    border-color: #00C4B4;
+    box-shadow: 0 0 12px rgba(0, 196, 180, 0.4);
+}
+
+/* Buttons */
+.btn {
+    border: none;
+    border-radius: 16px;
+    padding: 14px 28px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    transition: all 0.4s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    z-index: 0;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary {
+    background: linear-gradient(90deg, #00C4B4, #00E6C3);
+    color: #FFFFFF;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(90deg, #00E6C3, #00C4B4);
+    box-shadow: 0 8px 30px rgba(0, 196, 180, 0.8);
+}
+
+.btn-success {
+    background: linear-gradient(90deg, #FFD700, #FFEA00);
+    color: #1A1A1A;
+}
+
+.btn-success:hover {
+    background: linear-gradient(90deg, #FFEA00, #FFD700);
+    box-shadow: 0 8px 30px rgba(255, 215, 0, 0.8);
+}
+
+.btn-danger {
+    background: linear-gradient(90deg, #FF4040, #FF6666);
+    color: #FFFFFF;
+    min-width: 90px;
+    text-align: center;
+    padding: 10px 20px;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(90deg, #FF6666, #FF4040);
+    box-shadow: 0 8px 30px rgba(255, 64, 64, 0.8);
+}
+
+.btn-outline-light {
+    border: 1px solid #A0A0A0;
+    color: #A0A0A0;
+    background: transparent;
+    padding: 8px 12px;
+}
+
+.btn-outline-light:hover {
+    border-color: #FFD700;
+    color: #FFD700;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+/* Button Spacing in Wallet Card */
+.wallet-card .btn {
+    margin-right: 10px; /* Space between buttons */
+}
+
+.wallet-card .btn:last-child {
+    margin-right: 0; /* No margin on last button */
+}
+
+/* Navbar */
+.navbar {
+    background: linear-gradient(90deg, #141414, #1A1A1A);
+    padding: 20px 0;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.9);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.navbar-brand {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    color: #FFD700 !important;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand i {
+    margin-right: 10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.nav-link {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    color: #A0A0A0 !important;
+    padding: 12px 25px;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+}
+
+.nav-link:hover {
+    color: #FFD700 !important;
+    background: rgba(255, 215, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Footer */
+footer {
+    background: #0D0D0D;
+    padding: 40px 0;
+    color: #A0A0A0;
+    font-size: 14px;
+    border-top: 1px solid rgba(255, 215, 0, 0.1);
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.1);
+}
+
+/* Sidebar (Transfer Funds) */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: -500px;
+    width: 500px;
+    height: 100%;
+    background: linear-gradient(145deg, #222222, #1C1C1C);
+    border-left: 2px solid rgba(255, 215, 0, 0.2);
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.9);
+    transition: right 0.5s ease;
+    z-index: 2000;
+    padding: 40px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar.open {
+    right: 0;
+}
+
+.sidebar-toggle {
+    position: fixed;
+    top: 20%;
+    right: 0;
+    background: linear-gradient(90deg, #FFD700, #FFEA00);
+    border: none;
+    border-radius: 10px 0 0 10px;
+    padding: 20px 30px;
+    cursor: pointer;
+    z-index: 2001;
+    transform: translateY(-50%);
+    transition: all 0.3s ease;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-toggle:hover {
+    background: linear-gradient(90deg, #FFEA00, #FFD700);
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.9);
+}
+
+.sidebar-toggle i {
+    font-size: 24px;
+    color: #1A1A1A;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-toggle:hover i {
+    transform: rotate(180deg);
+}
+
+/* Group Management Grid */
+.group-vault {
+    position: relative;
+    padding: 50px 0;
+}
+
+.dynamic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 25px;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.group-panel {
+    background: linear-gradient(145deg, #222222, #1C1C1C);
+    border-radius: 24px;
+    padding: 25px;
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+    transition: box-shadow 0.4s ease;
+    height: 450px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.group-panel:hover {
+    box-shadow: 0 12px 40px rgba(0, 196, 180, 0.3);
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.group-panel h4 {
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.group-panel .badge {
+    background: #FF4040;
+    color: #FFFFFF;
+    padding: 5px 10px;
+    border-radius: 10px;
+}
+
+/* Wallet Card */
+.wallet-card {
+    background: #2D2D2D;
+    border-radius: 16px;
+    padding: 15px;
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    margin-bottom: 15px;
+    transition: box-shadow 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px; /* Consistent height for wallet cards */
+}
+
+.wallet-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 196, 180, 0.2);
+}
+
+.wallet-card.selected {
+    border-color: #FF4040;
+    box-shadow: 0 6px 20px rgba(255, 64, 64, 0.2);
+}
+
+.wallet-card .label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.admin-view .wallet-card .label.user-label {
+    color: #00C4B4; /* Highlight "User" label for admins */
+}
+
+.wallet-card .value {
+    font-family: 'Roboto', sans-serif; /* Consistent with body font */
+    font-size: 13px; /* Slightly smaller for long values */
+    color: #FFFFFF;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+/* Money-Related Text (e.g., ETH) */
+.money-text {
+    color: #FFFFFF;
+    text-shadow: 0 0 12px #FFD700, 0 0 24px #FFD700, 0 0 30px #FFD700;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+    .row.g-4 {
+        gap: 20px; /* Smaller gap on small screens */
+    }
+    
+    .card {
+        padding: 20px; /* Reduced padding */
+    }
+    
+    .wallet-card {
+        padding: 10px; /* Reduced padding */
+    }
+    
+    .btn {
+        padding: 10px 20px; /* Smaller buttons */
+        font-size: 14px;
+    }
+}
+
+/* Enhanced Modal Styling */
+.cosmic-modal::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, rgba(0, 196, 180, 0.05) 70%, transparent 100%);
+    opacity: 0.5;
+    z-index: -1;
+    animation: rotateGlow 15s linear infinite;
+}
+
+@keyframes rotateGlow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.modal-content .form-control:focus {
+    border-color: #FFD700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.7), inset 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.modal-header, .modal-footer {
+    background: linear-gradient(90deg, #222222, #1C1C1C);
+}
+
+.modal-body {
+    background: #2D333B;
+}
+
+.modal-content {
+    animation: fadeInModal 0.5s ease-in-out;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}

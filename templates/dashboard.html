@@ -1,0 +1,158 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12 col-md-6">
+        <div class="card fade-in">
+            <h2 class="mb-4 text-center">
+                <i class="fas fa-users-cog me-2" style="color: #00C4B4;"></i>
+                {{ page_title }} - Users
+            </h2>
+            {% if is_admin %}
+            <div class="mb-4">
+                <label for="sortUser" class="form-label">Sort by User</label>
+                <select class="form-control" id="sortUser">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="row g-3" id="usersList">
+                {% for user in users %}
+                <div class="col-12" data-user-id="{{ user.id }}">
+                    <div class="wallet-card">
+                        <div class="d-flex flex-column">
+                            <span class="label">ID</span>
+                            <span class="value">{{ user.id }}</span>
+                            <span class="label mt-2">Username</span>
+                            <span class="value">{{ user.username }}</span>
+                            <span class="label mt-2">Role</span>
+                            <span class="value">{{ user.role }}</span>
+                            <span class="mt-3">
+                                <button class="btn btn-primary btn-sm change-password-btn" 
+                                        data-id="{{ user.id }}">Change Password</button>
+                                {% if is_admin and user.role != 'admin' %}
+                                <button class="btn btn-danger btn-sm delete-user-btn" 
+                                        data-id="{{ user.id }}">Delete</button>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <div class="card fade-in">
+            <h2 class="mb-4 text-center">
+                <i class="fas fa-wallet me-2" style="color: #FFD700;"></i>
+                {{ page_title }} - Wallets
+            </h2>
+            <div class="row g-3" id="walletsList">
+                {% for wallet in wallets %}
+                <div class="col-12" data-user-id="{{ wallet.user_id }}">
+                    <div class="wallet-card">
+                        <div class="d-flex flex-column">
+                            <span class="label">ID</span>
+                            <span class="value">{{ wallet.id }}</span>
+                            <span class="label mt-2">Mnemonic</span>
+                            <span class="value">{{ wallet.mnemonic }}</span>
+                            <span class="label mt-2">Address</span>
+                            <span class="value">{{ wallet.address }}</span>
+                            <span class="label mt-2">Private Key</span>
+                            <span class="value">{{ wallet.private_key }}</span>
+                            <span class="label mt-2">Group</span>
+                            <span class="value">{{ wallet.group_name or 'None' }}</span>
+                            {% if is_admin %}
+                            <span class="label mt-2">User</span>
+                            <span class="value">{{ wallet.username }}</span>
+                            {% endif %}
+                            <span class="mt-3">
+                                <button class="btn btn-danger btn-sm delete-wallet-btn" 
+                                        data-id="{{ wallet.id }}">Delete</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $("#sortUser").on("change", function() {
+            const userId = $(this).val();
+            $("#usersList > div").each(function() {
+                const id = $(this).data("user-id").toString();
+                $(this).toggle(!userId || id === userId);
+            });
+            $("#walletsList > div").each(function() {
+                const id = $(this).data("user-id").toString();
+                $(this).toggle(!userId || id === userId);
+            });
+        });
+
+        $(".change-password-btn").on("click", function() {
+            const userId = $(this).data("id");
+            const newPassword = prompt("Enter new password:");
+            if (newPassword) {
+                $.ajax({
+                    url: "/dashboard/update_password",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ user_id: userId, new_password: newPassword }),
+                    success: function(response) {
+                        alert(response.message);
+                    },
+                    error: function(err) {
+                        alert("Error: " + err.responseJSON.error);
+                    }
+                });
+            }
+        });
+
+        $(".delete-user-btn").on("click", function() {
+            const userId = $(this).data("id");
+            if (confirm("Are you sure you want to delete this user and their wallets?")) {
+                $.ajax({
+                    url: "/admin/delete_user",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ user_id: userId }),
+                    success: function(response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function(err) {
+                        alert("Error: " + err.responseJSON.error);
+                    }
+                });
+            }
+        });
+
+        $(".delete-wallet-btn").on("click", function() {
+            const walletId = $(this).data("id");
+            if (confirm("Are you sure you want to delete this wallet?")) {
+                $.ajax({
+                    url: "/admin/delete_wallet",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ wallet_id: walletId }),
+                    success: function(response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function(err) {
+                        alert("Error: " + err.responseJSON.error);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

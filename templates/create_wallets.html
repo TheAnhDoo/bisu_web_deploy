@@ -1,0 +1,97 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+    <div class="col-12 col-md-6 col-lg-4" id="createFormCol">
+        <div class="card fade-in">
+            <h2 class="mb-4 text-center"><i class="fas fa-wallet me-2" style="color: #00C4B4;"></i>Create New Wallets</h2>
+            <form id="createWalletsForm" class="needs-validation" novalidate>
+                <div class="mb-4">
+                    <label for="num_wallets" class="form-label">Number of Wallets</label>
+                    <input type="number" class="form-control" id="num_wallets" name="num_wallets" min="1" max="100" required>
+                    <div class="invalid-feedback">Please enter a number between 1 and 100</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create Wallets</button>
+            </form>
+            <div class="mt-4" id="walletMessage"></div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-8" id="newWalletsDisplay" style="display: none;">
+        <div class="card fade-in">
+            <h4 class="mb-4 text-center">Newly Created Wallets</h4>
+            <div id="newWalletsContainer" class="row g-3"></div>
+            <button id="downloadBtn" class="btn btn-success mt-4 w-100">Download as Excel</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#createWalletsForm").on("submit", function(event) {
+            event.preventDefault();
+            if (!this.checkValidity()) return;
+
+            const numWallets = $("#num_wallets").val();
+            const maxColumns = 2;
+
+            $.ajax({
+                url: "/create_wallets",
+                type: "POST",
+                data: { num_wallets: numWallets },
+                success: function(response) {
+                    $("#walletMessage").html(
+                        `<div class="alert alert-success">${response.message}</div>`
+                    );
+
+                    const newWallets = response.new_wallets;
+                    if (newWallets && newWallets.length > 0) {
+                        const container = $("#newWalletsContainer");
+                        container.empty();
+                        const rows = Math.ceil(newWallets.length / maxColumns);
+                        let index = 0;
+                        for (let i = 0; i < rows; i++) {
+                            const row = $('<div class="row g-3"></div>');
+                            for (let j = 0; j < maxColumns && index < newWallets.length; j++, index++) {
+                                const wallet = newWallets[index];
+                                row.append(`
+                                    <div class="col-12 col-md-6">
+                                        <div class="wallet-card">
+                                            <div class="d-flex flex-column">
+                                                <span class="label">Mnemonic</span>
+                                                <span class="value">${wallet.mnemonic}</span>
+                                                <span class="label mt-2">Address</span>
+                                                <span class="value">${wallet.address}</span>
+                                                <span class="label mt-2">Private Key</span>
+                                                <span class="value">${wallet.private_key}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `);
+                            }
+                            container.append(row);
+                        }
+                        $("#newWalletsDisplay").show();
+                    }
+                },
+                error: function(err) {
+                    $("#walletMessage").html(
+                        `<div class="alert alert-danger">Error: ${err.responseJSON ? err.responseJSON.error : 'Unknown error'}</div>`
+                    );
+                }
+            });
+        });
+
+        $("#downloadBtn").click(function() {
+            const newWallets = Array.from($("#newWalletsContainer .wallet-card")).map(card => {
+                const values = $(card).find(".value").map((i, el) => $(el).text()).get();
+                return { "Mnemonic": values[0], "Address": values[1], "Private Key": values[2] };
+            });
+            const ws = XLSX.utils.json_to_sheet(newWallets);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "New Wallets");
+            XLSX.writeFile(wb, "new_wallets.xlsx");
+        });
+    });
+</script>
+{% endblock %}

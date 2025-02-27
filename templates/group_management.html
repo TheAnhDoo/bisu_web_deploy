@@ -1,0 +1,379 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card fade-in group-vault" style="background-color: #1C2526; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+            <h2 class="text-center py-3" style="color: #FFD700;"><i class="fas fa-users me-2" style="color: #FF4040;"></i>Group Management</h2>
+            <div class="button-group mb-4 d-flex justify-content-center align-items-center flex-wrap gap-2">
+                <input type="text" class="form-control" id="newGroupInput" placeholder="Create a New Vault" style="max-width: 300px; border-radius: 5px;">
+                <button type="button" id="createGroupBtn" class="btn btn-warning text-dark" style="border-radius: 5px;">Create</button>
+                <button type="button" id="assignGroupBtn" class="btn btn-success" style="border-radius: 5px;" data-bs-toggle="modal" data-bs-target="#assignGroupModal">Assign Selected to Vault</button>
+            </div>
+            <div class="dynamic-grid" id="groupsContainer" style="min-height: 300px;"></div>
+            <div class="mt-4 text-center" id="errorMessage" style="transition: opacity 0.3s;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Assigning Group -->
+<div class="modal fade" id="assignGroupModal" tabindex="-1" aria-labelledby="assignGroupModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cosmic-modal" style="background: linear-gradient(135deg, #222222, #1C1C1C); border: none; border-radius: 20px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(255, 215, 0, 0.15); backdrop-filter: blur(10px); overflow: hidden; z-index: 1060;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 215, 0, 0.1);">
+                <h5 class="modal-title" id="assignGroupModalLabel" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">Assign Wallets to Vault</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body p-4" style="background: #2D333B;">
+                <div class="mb-3">
+                    <label for="groupSelect" class="form-label">Select a Vault</label>
+                    <select class="form-control" id="groupSelect" style="border-radius: 15px; padding: 12px; background: #1A1A1A; border-color: rgba(255, 215, 0, 0.2);">
+                        <option value="">-- Select or Create a Vault --</option>
+                        {% for group in groups %}
+                            <option value="{{ group }}">{{ group }}</option>
+                        {% endfor %}
+                        <option value="new">Create New Vault</option>
+                    </select>
+                </div>
+                <div id="newGroupDiv" class="mb-3" style="display: none;">
+                    <label for="newGroupName" class="form-label">New Vault Name</label>
+                    <input type="text" class="form-control" id="newGroupName" placeholder="Enter vault name" style="border-radius: 15px; padding: 12px; background: #1A1A1A; border-color: rgba(255, 215, 0, 0.2);">
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(255, 215, 0, 0.1); background: #222222;">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal" style="border-radius: 15px; padding: 10px 20px;">Cancel</button>
+                <button type="button" id="confirmAssignBtn" class="btn btn-success" style="border-radius: 15px; padding: 10px 20px;">Assign</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        const wallets = {{ wallets | tojson | safe }};
+        let groups = new Set(wallets.map(w => w.group_name).filter(g => g));
+        let selectedWallets = new Set();
+
+        // Initialize Bootstrap modal with fallback and debugging
+        let assignModal;
+        try {
+            assignModal = new bootstrap.Modal(document.getElementById('assignGroupModal'), {
+                backdrop: true,     // Ensure backdrop is enabled but manageable
+                keyboard: true,     // Allow Esc key to close
+                focus: true         // Set focus on modal open
+            });
+            console.log("Modal initialized successfully with options:", { backdrop: true, keyboard: true, focus: true });
+
+            // Manually manage backdrop to ensure it doesn't block
+            assignModal._element.addEventListener('shown.bs.modal', function () {
+                console.log("Modal shown, checking backdrop");
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.pointerEvents = 'none'; // Allow clicks through backdrop
+                    backdrop.style.zIndex = '1040'; // Below modal content
+                }
+            });
+
+            assignModal._element.addEventListener('hidden.bs.modal', function () {
+                console.log("Modal hidden, removing backdrop");
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
+            });
+        } catch (e) {
+            console.error("Bootstrap Modal initialization failed:", e);
+            $("#errorMessage").text("Modal failed to load. Check console for details.").addClass("text-danger").css("opacity", 1);
+            setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+        }
+
+        function renderGroups() {
+            const groupsContainer = $("#groupsContainer");
+            groupsContainer.empty();
+
+            groups.forEach(group => {
+                const groupWallets = wallets.filter(w => w.group_name === group);
+                const $groupPanel = $(`
+                    <div class="group-panel slide-in">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">${group} <span class="badge">${groupWallets.length}</span></h4>
+                            <div>
+                                <button class="btn btn-danger btn-sm delete-group-btn me-2" aria-label="Erase ${group} group">Erase</button>
+                                <button type="button" class="btn btn-outline-light btn-sm toggle-group-btn" aria-label="Toggle all in ${group}">Toggle All</button>
+                            </div>
+                        </div>
+                        <div class="group-wallets row g-2"></div>
+                    </div>
+                `);
+                const groupContainer = $groupPanel.find(".group-wallets");
+                groupWallets.forEach(wallet => {
+                    const isSelected = selectedWallets.has(wallet.id);
+                    groupContainer.append(createWalletCard(wallet, isSelected));
+                });
+                groupsContainer.append($groupPanel);
+            });
+
+            const ungroupedWallets = wallets.filter(w => !w.group_name);
+            if (ungroupedWallets.length > 0) {
+                const $ungroupedPanel = $(`
+                    <div class="group-panel slide-in">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Ungrouped <span class="badge">${ungroupedWallets.length}</span></h4>
+                            <div>
+                                <button class="btn btn-danger btn-sm delete-group-btn me-2" aria-label="Erase ungrouped wallets">Erase</button>
+                                <button type="button" class="btn btn-outline-light btn-sm toggle-group-btn" aria-label="Toggle all ungrouped">Toggle All</button>
+                            </div>
+                        </div>
+                        <div class="group-wallets row g-2"></div>
+                    </div>
+                `);
+                const ungroupedContainer = $ungroupedPanel.find(".group-wallets");
+                ungroupedWallets.forEach(wallet => {
+                    const isSelected = selectedWallets.has(wallet.id);
+                    ungroupedContainer.append(createWalletCard(wallet, isSelected));
+                });
+                groupsContainer.append($ungroupedPanel);
+            }
+            updateSelection();
+        }
+
+        function createWalletCard(wallet, selected = false) {
+            return `
+                <div class="col-12">
+                    <div class="wallet-card ${selected ? 'selected' : ''}" data-id="${wallet.id}">
+                        <div class="d-flex justify-content-between align-items-center w-100" style="cursor: pointer;">
+                            <div class="d-flex flex-column">
+                                <span class="label">Address</span>
+                                <span class="value">${wallet.address}</span>
+                                <span class="label mt-2">ETH Balance</span>
+                                <span class="value">${wallet.eth_balance} ETH</span>
+                            </div>
+                            <input type="checkbox" class="wallet-checkbox" data-id="${wallet.id}" ${selected ? 'checked' : ''}>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateSelection() {
+            selectedWallets.clear();
+            $(".wallet-checkbox:checked").each(function() {
+                selectedWallets.add($(this).data("id"));
+            });
+            $(".wallet-card").toggleClass("selected", false).filter(function() {
+                return selectedWallets.has($(this).data("id"));
+            }).addClass("selected");
+        }
+
+        renderGroups();
+
+        $("#groupsContainer").on("click", ".wallet-card", function(e) {
+            if (!$(e.target).is("input")) {
+                const checkbox = $(this).find(".wallet-checkbox");
+                checkbox.prop("checked", !checkbox.prop("checked")).trigger("change");
+            }
+        });
+
+        $("#groupsContainer").on("change", ".wallet-checkbox", function() {
+            updateSelection();
+            $(this).closest(".wallet-card").toggleClass("selected", $(this).is(":checked"));
+        });
+
+        $("#groupsContainer").on("click", ".delete-group-btn", function() {
+            const group = $(this).closest(".group-panel").find("h4").text().split(" ")[0];
+            if (confirm(`Are you sure you want to erase the "${group}" vault? Wallets will be ungrouped.`)) {
+                groups.delete(group);
+                wallets.forEach(w => {
+                    if (w.group_name === group) w.group_name = null;
+                });
+                $.ajax({
+                    url: "/update_group",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ action: "delete_group", group_name: group }),
+                    success: function(response) {
+                        $("#errorMessage").text(response.message).removeClass("text-danger").addClass("text-success").css("opacity", 1);
+                        renderGroups();
+                    },
+                    error: function(err) {
+                        $("#errorMessage").text("Error: " + (err.responseJSON ? err.responseJSON.error : "Unknown")).addClass("text-danger").css("opacity", 1);
+                    },
+                    complete: function() {
+                        setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+                    }
+                });
+            }
+        });
+
+        $("#groupsContainer").on("click", ".toggle-group-btn", function() {
+            const $groupPanel = $(this).closest(".group-panel");
+            const groupWallets = $groupPanel.find(".wallet-checkbox");
+            const isAllSelected = groupWallets.length === groupWallets.filter(":checked").length;
+            groupWallets.prop("checked", !isAllSelected).trigger("change");
+            updateSelection();
+        });
+
+        $("#createGroupBtn").click(function() {
+            const groupName = $("#newGroupInput").val().trim();
+            if (groupName && !groups.has(groupName)) {
+                groups.add(groupName);
+                $("#newGroupInput").val('');
+                $.ajax({
+                    url: "/update_group",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ action: "create_group", group_name: groupName }),
+                    success: function(response) {
+                        $("#errorMessage").text(`Vault "${groupName}" crafted successfully!`).removeClass("text-danger").addClass("text-success").css("opacity", 1);
+                        renderGroups();
+                    },
+                    error: function(err) {
+                        $("#errorMessage").text("Error: " + (err.responseJSON ? err.responseJSON.error : "Unknown")).addClass("text-danger").css("opacity", 1);
+                    },
+                    complete: function() {
+                        setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+                    }
+                });
+            } else if (!groupName) {
+                $("#errorMessage").text("Please enter a vault name").addClass("text-danger").css("opacity", 1);
+            } else {
+                $("#errorMessage").text("Vault already exists").addClass("text-danger").css("opacity", 1);
+            }
+            setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+        });
+
+        $("#assignGroupBtn").click(function() {
+            if (selectedWallets.size > 0) {
+                if (assignModal) {
+                    console.log("Showing modal with selected wallets:", selectedWallets.size);
+                    assignModal.show();
+                    $("#groupSelect").val("");
+                    $("#newGroupDiv").hide();
+                    $("#newGroupName").val("");
+                    // Ensure focus and check backdrop
+                    $("#groupSelect").focus();
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        console.log("Backdrop found, setting pointer-events to none");
+                        backdrop.style.pointerEvents = 'none';
+                        backdrop.style.zIndex = '1040';
+                    }
+                } else {
+                    console.error("Modal not initialized");
+                    $("#errorMessage").text("Modal failed to load. Check console for details.").addClass("text-danger").css("opacity", 1);
+                    setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+                }
+            } else {
+                $("#errorMessage").text("Please select at least one wallet").addClass("text-danger").css("opacity", 1);
+                setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+            }
+        });
+
+        $("#groupSelect").on("change", function() {
+            console.log("Group select changed to:", $(this).val());
+            if ($(this).val() === "new") {
+                $("#newGroupDiv").show();
+            } else {
+                $("#newGroupDiv").hide();
+            }
+        });
+
+        $("#confirmAssignBtn").click(function() {
+            const selectedGroup = $("#groupSelect").val();
+            let groupName = selectedGroup;
+            if (selectedGroup === "new") {
+                groupName = $("#newGroupName").val().trim();
+                if (!groupName) {
+                    $("#errorMessage").text("Please enter a new vault name").addClass("text-danger").css("opacity", 1);
+                    setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+                    return;
+                }
+                if (groups.has(groupName)) {
+                    $("#errorMessage").text("Vault already exists").addClass("text-danger").css("opacity", 1);
+                    setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+                    return;
+                }
+                groups.add(groupName);
+            }
+            if (groupName || groupName === "") {
+                console.log("Assigning to group:", groupName, "with wallet IDs:", Array.from(selectedWallets));
+                selectedWallets.forEach(walletId => {
+                    const wallet = wallets.find(w => w.id === walletId);
+                    if (wallet) wallet.group_name = groupName || null;
+                });
+                $.ajax({
+                    url: "/update_group",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        action: "assign_group",
+                        wallet_ids: Array.from(selectedWallets),
+                        group_name: groupName || null
+                    }),
+                    success: function(response) {
+                        $("#errorMessage").text(response.message).removeClass("text-danger").addClass("text-success").css("opacity", 1);
+                        selectedWallets.clear();
+                        renderGroups();
+                        if (assignModal) {
+                            assignModal.hide();
+                            console.log("Modal hidden, backdrop should be removed");
+                        }
+                    },
+                    error: function(err) {
+                        $("#errorMessage").text("Error: " + (err.responseJSON ? err.responseJSON.error : "Unknown")).addClass("text-danger").css("opacity", 1);
+                    },
+                    complete: function() {
+                        setTimeout(() => $("#errorMessage").css("opacity", 0), 3000);
+                    }
+                });
+            }
+        });
+    });
+</script>
+<style>
+    .group-vault { color: #E0E0E0; }
+    .group-panel { opacity: 0; animation: slideIn 0.5s forwards; }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .wallet-card.selected { border: 2px solid #FFD700; }
+    .wallet-card:hover { background-color: #2D3A3A; transition: background-color 0.3s; }
+    #errorMessage { opacity: 0; color: #FFD700; font-weight: bold; }
+    .badge { font-size: 0.9em; padding: 0.25em 0.5em; background-color: #007BFF; color: white; border-radius: 5px; }
+    .cosmic-modal::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, rgba(0, 196, 180, 0.03) 70%, transparent 100%);
+        opacity: 0.4;
+        z-index: -1;
+        animation: rotateGlow 15s linear infinite;
+    }
+    @keyframes rotateGlow {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .modal-content .form-control { background-color: #1A1A1A; color: #E0E0E0; border-color: #3D4A52; }
+    .modal-content .form-control:focus { border-color: #FFD700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); }
+    .modal-header, .modal-footer { background: linear-gradient(90deg, #222222, #1C1C1C); }
+    .modal-body { background: #2D333B; }
+    .modal-content { animation: fadeInModal 0.5s ease-in-out; }
+    @keyframes fadeInModal {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    /* Ensure backdrop allows interaction */
+    .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1040; /* Below modal content (z-index: 1060) */
+        pointer-events: none; /* Allow clicks to pass through to modal */
+    }
+    /* Ensure modal is fully interactive */
+    .modal-content {
+        pointer-events: auto; /* Explicitly enable pointer events */
+        z-index: 1060; /* Above backdrop */
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,11 @@
+Flask
+flask-login
+web3
+pandas
+mnemonic
+werkzeug
+logging
+eth-account
+flask-wtf
+flask-sqlalchemy
+

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Vault</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<br><br><br><br><br>
+<body class="{% if current_user.is_authenticated and current_user.role == 'admin' %}admin-view{% else %}user-view{% endif %}">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-vault"></i> Crypto Vault
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                <!-- Inside the <ul class="navbar-nav ms-auto"> -->
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('create_wallets_page') }}">Create Wallets</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('divide_funds_page') }}">Transfer Funds</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('check_wallets_page') }}">View Balances</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('import_wallets_page') }}">Import Wallets</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('wallets_page') }}">My Wallets</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('group_management_page') }}">Group Management</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard_page') }}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Register</a></li>
+                {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container fade-in">
+        {% block content %}
+        <div class="row g-4 justify-content-center text-center">
+            <div class="col-12">
+                <h1>Crypto Vault</h1>
+                <p style="font-size: 18px; max-width: 600px; margin: 0 auto; color: #D3D3D3; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);">
+                    {% if current_user.is_authenticated %}
+                        Welcome, {{ current_user.username }}. Secure your Web3 wealth with elegance.
+                    {% else %}
+                        Step into the future of crypto security. Join now.
+                    {% endif %}
+                </p>
+            </div>
+            {% if current_user.is_authenticated %}
+            <div class="col-12 col-md-4">
+                <a href="{{ url_for('create_wallets_page') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-plus-circle me-2" style="color: #00C4B4;"></i>Create Wallets</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Forge new keys to your digital fortress.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-4">
+                <a href="{{ url_for('divide_funds_page') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-exchange-alt me-2" style="color: #FFD700;"></i>Transfer Funds</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Distribute assets with precision.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-4">
+                <a href="{{ url_for('check_wallets_page') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-chart-bar me-2" style="color: #FF4040;"></i>View Balances</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Monitor your crypto empire.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-4">
+                <a href="{{ url_for('import_wallets_page') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-file-import me-2" style="color: #00C4B4;"></i>Import Wallets</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Add treasures to your vault.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-4">
+                <a href="{{ url_for('wallets_page') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-wallet me-2" style="color: #FFD700;"></i>My Wallets</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Master your collection.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-4">
+                <a href="{{ url_for('group_management_page') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-users me-2" style="color: #FF4040;"></i>Group Management</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Organize your assets.</p>
+                </a>
+            </div>
+            {% if current_user.role == 'admin' %}
+            <div class="col-12 col-md-4">
+                <a href="{{ url_for('dashboard_page') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-users-cog me-2" style="color: #00C4B4;"></i>Admin Dashboard</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Control the vault.</p>
+                </a>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="col-12 col-md-6">
+                <a href="{{ url_for('login') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-sign-in-alt me-2" style="color: #00C4B4;"></i>Login</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Access your vault.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-6">
+                <a href="{{ url_for('register') }}" class="card text-decoration-none">
+                    <h4><i class="fas fa-user-plus me-2" style="color: #FFD700;"></i>Register</h4>
+                    <p style="color: #D3D3D3; font-size: 14px;">Begin your journey.</p>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endblock %}
+    </main>
+<br>
+    <footer class="text-center">
+        <span>© 2025 Crypto Vault - Powered by xAI</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

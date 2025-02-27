@@ -1,0 +1,130 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card fade-in">
+            <h2 class="mb-4 text-center"><i class="fas fa-chart-bar me-2" style="color: #FF4040;"></i>Wallet Balances</h2>
+            <div class="row g-3 mb-4 justify-content-center">
+                <div class="col-md-4">
+                    <label for="sortGroup" class="form-label">Sort by Group</label>
+                    <select class="form-control" id="sortGroup">
+                        <option value="">All Groups</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="sortEth" class="form-label">Sort by ETH</label>
+                    <select class="form-control" id="sortEth">
+                        <option value="none">None</option>
+                        <option value="asc">Ascending</option>
+                        <option value="desc">Descending</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="sortMon" class="form-label">Sort by MON</label>
+                    <select class="form-control" id="sortMon">
+                        <option value="none">None</option>
+                        <option value="asc">Ascending</option>
+                        <option value="desc">Descending</option>
+                    </select>
+                </div>
+            </div>
+            <div id="walletBalances" class="row g-4"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        let walletsData = [];
+
+        function renderWallets(wallets) {
+            const container = $("#walletBalances");
+            container.empty();
+            if (!wallets || wallets.length === 0) {
+                container.html('<p class="text-center text-muted">No wallets found</p>');
+                return;
+            }
+            wallets.forEach(wallet => {
+                const ethBalance = wallet["ETH Balance"] !== null ? parseFloat(wallet["ETH Balance"]).toFixed(4) : 'N/A';
+                const monBalance = wallet["MON Balance"] !== null ? parseFloat(wallet["MON Balance"]).toFixed(4) : 'N/A';
+                container.append(`
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="wallet-card">
+                            <div class="d-flex flex-column">
+                                <span class="label">Address</span>
+                                <span class="value">${wallet.Address || 'Unknown'}</span>
+                                <span class="label mt-2">ETH Balance</span>
+                                <span class="value">${ethBalance} ETH</span>
+                                <span class="label mt-2">MON Balance</span>
+                                <span class="value">${monBalance} MON</span>
+                                <span class="label mt-2">Group</span>
+                                <span class="value">${wallet.Group || 'Ungrouped'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+
+        $.get("/check_balances")
+            .done(function(wallets) {
+                walletsData = wallets;
+                const groupFilter = $("#sortGroup");
+                const groups = new Set(wallets.map(w => w.Group || 'Ungrouped'));
+                groups.forEach(group => {
+                    groupFilter.append(`<option value="${group}">${group}</option>`);
+                });
+                renderWallets(walletsData);
+            })
+            .fail(function(xhr) {
+                $("#walletBalances").html(
+                    `<p class="text-center text-danger">Error: ${xhr.responseJSON?.error || 'Unable to fetch balances'}</p>`
+                );
+            });
+
+        $("#sortGroup").on("change", function() {
+            const group = $(this).val();
+            const filtered = group ? walletsData.filter(w => (w.Group || 'Ungrouped') === group) : walletsData;
+            applySort(filtered);
+        });
+
+        $("#sortEth").on("change", function() {
+            applySort(walletsData);
+        });
+
+        $("#sortMon").on("change", function() {
+            applySort(walletsData);
+        });
+
+        function applySort(data) {
+            let sorted = [...data];
+            const group = $("#sortGroup").val();
+            const ethSort = $("#sortEth").val();
+            const monSort = $("#sortMon").val();
+
+            if (group) {
+                sorted = sorted.filter(w => (w.Group || 'Ungrouped') === group);
+            }
+
+            if (ethSort !== "none") {
+                sorted.sort((a, b) => {
+                    const aVal = a["ETH Balance"] !== null ? parseFloat(a["ETH Balance"]) : -Infinity;
+                    const bVal = b["ETH Balance"] !== null ? parseFloat(b["ETH Balance"]) : -Infinity;
+                    return ethSort === "asc" ? aVal - bVal : bVal - aVal;
+                });
+            }
+
+            if (monSort !== "none") {
+                sorted.sort((a, b) => {
+                    const aVal = a["MON Balance"] !== null ? parseFloat(a["MON Balance"]) : -Infinity;
+                    const bVal = b["MON Balance"] !== null ? parseFloat(b["MON Balance"]) : -Infinity;
+                    return monSort === "asc" ? aVal - bVal : bVal - aVal;
+                });
+            }
+
+            renderWallets(sorted);
+        }
+    });
+</script>
+{% endblock %}

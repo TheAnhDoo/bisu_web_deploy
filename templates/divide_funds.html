@@ -1,0 +1,225 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+    <div class="col-12 col-md-10">
+        <div class="card fade-in">
+            <h2 class="mb-4 text-center"><i class="fas fa-exchange-alt me-2" style="color: #FFD700;"></i>Transfer Funds</h2>
+            <div class="mb-4 text-center">
+                <label for="groupFilter" class="form-label">Select Group</label>
+                <select class="form-control" id="groupFilter" style="max-width: 500px; margin: 0 auto;">
+                    <option value="">All Groups</option>
+                </select>
+            </div>
+            <div id="walletsList" class="row g-3 mb-4"></div>
+            <h4 class="mb-3 text-center">Selected Wallets</h4>
+            <div id="selectedWallets" class="row g-3">
+                <div class="col-12">
+                    <div class="wallet-card" id="selectedWalletsContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="sidebar-toggle"><i class="fas fa-arrow-left fa-2x"></i></button>
+<div class="sidebar" id="transferSidebar">
+    <br><br><br><br><br>
+    <h2 class="mb-4"><i class="fas fa-exchange-alt me-2" style="color: #FFD700;"></i>Transfer Form</h2>
+    <form id="divideFundsForm" class="needs-validation" novalidate>
+        <div class="mb-4">
+            <label for="private_key" class="form-label">Sender Private Key</label>
+            <input type="password" class="form-control" id="private_key" required placeholder="Enter private key">
+        </div>
+        <div class="mb-4">
+            <label for="amount" class="form-label">ETH per Wallet</label>
+            <input type="number" class="form-control" id="amount" step="0.0001" min="0.0001" required placeholder="Enter ETH amount">
+        </div>
+        <div class="mb-4">
+            <label class="form-label">Manual Wallet Addresses</label>
+            <div id="manualWallets">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control manual-wallet" placeholder="Enter wallet address">
+                    <button type="button" class="btn btn-outline-light btn-sm remove-input ms-2">Remove</button>
+                </div>
+            </div>
+            <button type="button" id="addMoreBtn" class="btn btn-outline-light btn-sm mt-2">Add More</button>
+        </div>
+        <button type="submit" class="btn btn-success w-100">Transfer Funds</button>
+    </form>
+    <div class="mt-4" id="transferResult"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        let allWallets = [];
+        let selectedWallets = new Set();
+
+        $(".sidebar-toggle").click(function() {
+            $("#transferSidebar").toggleClass("open");
+            $(this).find("i").toggleClass("fa-arrow-left fa-arrow-right");
+            if (!$("#transferSidebar").hasClass("open")) {
+                $("#selectedWalletsContainer").empty();
+            }
+        });
+
+        $.get("/get_wallets").done(function(wallets) {
+            allWallets = wallets;
+            const groupFilter = $("#groupFilter");
+            const groups = new Set(wallets.map(w => w.group_name || 'Ungrouped'));
+            groups.forEach(group => {
+                groupFilter.append(`<option value="${group}">${group}</option>`);
+            });
+            renderWallets(wallets);
+        }).fail(function() {
+            $("#walletsList").html('<p class="text-danger">Error loading wallets</p>');
+        });
+
+        function renderWallets(wallets) {
+            const list = $("#walletsList");
+            list.empty();
+            const filteredWallets = $("#groupFilter").val() ? wallets.filter(w => (w.group_name || 'Ungrouped') === $("#groupFilter").val()) : wallets;
+            if (filteredWallets.length === 0) {
+                list.html('<p class="text-center text-muted">No wallets in this group</p>');
+                return;
+            }
+            filteredWallets.forEach((wallet, index) => {
+                const isSelected = selectedWallets.has(wallet.address);
+                list.append(`
+                    <div class="col-12 col-md-6">
+                        <div class="wallet-card ${isSelected ? 'selected' : ''}" data-address="${wallet.address}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex flex-column">
+                                    <span class="label">Address</span>
+                                    <span class="value">${wallet.address}</span>
+                                    <span class="label mt-2 money-text">ETH Balance</span>
+                                    <span class="value">${wallet.eth_balance}</span>
+                                    <span class="label mt-2">Group</span>
+                                    <span class="value">${wallet.group_name || 'Ungrouped'}</span>
+                                </div>
+                                <div>
+                                    <input class="form-check-input select-checkbox" type="checkbox" value="${wallet.address}" id="wallet_${index}" ${isSelected ? 'checked' : ''}>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            });
+            updateSelectedWallets();
+        }
+
+        function updateSelectedWallets() {
+            const selectedContainer = $("#selectedWalletsContainer");
+            selectedContainer.empty();
+            if (selectedWallets.size > 0) {
+                selectedWallets.forEach(address => {
+                    const wallet = allWallets.find(w => w.address === address);
+                    selectedContainer.append(`
+                        <div class="wallet-card mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex flex-column">
+                                    <span class="label">Address</span>
+                                    <span class="value">${address}</span>
+                                    <span class="label money-text mt-2">ETH Balance</span>
+                                    <span class="value">${wallet.eth_balance}</span>
+                                    <span class="label mt-2">Group</span>
+                                    <span class="value">${wallet.group_name || 'Ungrouped'}</span>
+                                </div>
+                                <div>
+                                    <button class="btn btn-danger btn-sm deselect-btn" data-address="${address}">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+            } else {
+                selectedContainer.html('<p class="text-muted">No wallets selected</p>');
+            }
+        }
+
+        $("#groupFilter").on("change", function() {
+            renderWallets(allWallets);
+        });
+
+        $("#walletsList").on("change", ".select-checkbox", function() {
+            const address = $(this).val();
+            if ($(this).is(":checked")) {
+                selectedWallets.add(address);
+            } else {
+                selectedWallets.delete(address);
+            }
+            renderWallets(allWallets);
+            updateSelectedWallets();
+        });
+
+        $("#walletsList").on("click", ".wallet-card", function(e) {
+            if (!$(e.target).is("input")) {
+                const checkbox = $(this).find(".select-checkbox");
+                checkbox.prop("checked", !checkbox.prop("checked")).trigger("change");
+            }
+        });
+
+        $("#selectedWalletsContainer").on("click", ".deselect-btn", function() {
+            const address = $(this).data("address");
+            selectedWallets.delete(address);
+            renderWallets(allWallets);
+            updateSelectedWallets();
+        });
+
+        $("#addMoreBtn").click(function() {
+            $("#manualWallets").append(`
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control manual-wallet" placeholder="Enter wallet address">
+                    <button type="button" class="btn btn-outline-light btn-sm remove-input ms-2">Remove</button>
+                </div>
+            `);
+        });
+
+        $("#manualWallets").on("click", ".remove-input", function() {
+            $(this).closest(".input-group").remove();
+        });
+
+        $("#divideFundsForm").submit(function(event) {
+            event.preventDefault();
+            if (!this.checkValidity()) return;
+
+            const manualWallets = [];
+            $("#manualWallets input.manual-wallet").each(function() {
+                const addr = $(this).val().trim();
+                if (addr) manualWallets.push(addr);
+            });
+
+            const allSelected = Array.from(selectedWallets).concat(manualWallets);
+            if (allSelected.length === 0) {
+                $("#transferResult").html('<div class="alert alert-warning">Please select or enter at least one wallet</div>');
+                return;
+            }
+
+            $.ajax({
+                url: "/divide_funds",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    private_key: $("#private_key").val(),
+                    amount: $("#amount").val(),
+                    wallets: Array.from(selectedWallets),
+                    manual_wallets: manualWallets
+                }),
+                success: function(response) {
+                    $("#transferResult").html(
+                        `<div class="alert alert-success">${response.message.join("<br>")}</div>`
+                    );
+                    selectedWallets.clear();
+                    renderWallets(allWallets);
+                    updateSelectedWallets();
+                },
+                error: function(err) {
+                    $("#transferResult").html(
+                        `<div class="alert alert-danger">Error: ${err.responseJSON.error}</div>`
+                    );
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
