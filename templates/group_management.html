@@ -6,9 +6,9 @@
         <div class="card fade-in group-vault" style="background-color: #1C2526; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
             <h2 class="text-center py-3" style="color: #FFD700;"><i class="fas fa-users me-2" style="color: #FF4040;"></i>Group Management</h2>
             <div class="button-group mb-4 d-flex justify-content-center align-items-center flex-wrap gap-2">
-                <input type="text" class="form-control" id="newGroupInput" placeholder="Create a New Vault" style="max-width: 300px; border-radius: 5px;">
+                <input type="text" class="form-control" id="newGroupInput" placeholder="Create a New Group" style="max-width: 300px; border-radius: 5px;">
                 <button type="button" id="createGroupBtn" class="btn btn-warning text-dark" style="border-radius: 5px;">Create</button>
-                <button type="button" id="assignGroupBtn" class="btn btn-success" style="border-radius: 5px;" data-bs-toggle="modal" data-bs-target="#assignGroupModal">Assign Selected to Vault</button>
+                <button type="button" id="assignGroupBtn" class="btn btn-success" style="border-radius: 5px;" data-bs-toggle="modal" data-bs-target="#assignGroupModal">Assign Selected to Group</button>
             </div>
             <div class="dynamic-grid" id="groupsContainer" style="min-height: 300px;"></div>
             <div class="mt-4 text-center" id="errorMessage" style="transition: opacity 0.3s;"></div>
@@ -21,23 +21,23 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content cosmic-modal" style="background: linear-gradient(135deg, #222222, #1C1C1C); border: none; border-radius: 20px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(255, 215, 0, 0.15); backdrop-filter: blur(10px); overflow: hidden; z-index: 1060;">
             <div class="modal-header" style="border-bottom: 1px solid rgba(255, 215, 0, 0.1);">
-                <h5 class="modal-title" id="assignGroupModalLabel" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">Assign Wallets to Vault</h5>
+                <h5 class="modal-title" id="assignGroupModalLabel" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">Assign Wallets to Group</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
             </div>
             <div class="modal-body p-4" style="background: #2D333B;">
                 <div class="mb-3">
-                    <label for="groupSelect" class="form-label">Select a Vault</label>
+                    <label for="groupSelect" class="form-label">Select a Group</label>
                     <select class="form-control" id="groupSelect" style="border-radius: 15px; padding: 12px; background: #1A1A1A; border-color: rgba(255, 215, 0, 0.2);">
-                        <option value="">-- Select or Create a Vault --</option>
+                        <option value="">-- Select or Create a Group --</option>
                         {% for group in groups %}
                             <option value="{{ group }}">{{ group }}</option>
                         {% endfor %}
-                        <option value="new">Create New Vault</option>
+                        <option value="new">Create New Group</option>
                     </select>
                 </div>
                 <div id="newGroupDiv" class="mb-3" style="display: none;">
-                    <label for="newGroupName" class="form-label">New Vault Name</label>
-                    <input type="text" class="form-control" id="newGroupName" placeholder="Enter vault name" style="border-radius: 15px; padding: 12px; background: #1A1A1A; border-color: rgba(255, 215, 0, 0.2);">
+                    <label for="newGroupName" class="form-label">New Group Name</label>
+                    <input type="text" class="form-control" id="newGroupName" placeholder="Enter group name" style="border-radius: 15px; padding: 12px; background: #1A1A1A; border-color: rgba(255, 215, 0, 0.2);">
                 </div>
             </div>
             <div class="modal-footer" style="border-top: 1px solid rgba(255, 215, 0, 0.1); background: #222222;">
