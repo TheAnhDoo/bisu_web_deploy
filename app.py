@@ -51,7 +51,7 @@ def load_user(user_id):
 import os
 
 def init_db():
-    os.makedirs("/data", exist_ok=True)  # Ensure /data exists
+    os.makedirs("/data", exist_ok=True)  # Ensure /data exists before using SQLite
     conn = sqlite3.connect(app.config['DATABASE'])
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (
@@ -70,20 +70,19 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users (id),
         UNIQUE (group_name, user_id) ON CONFLICT IGNORE
     )''')
-    # Create admin user if not exists
-    admin_exists = c.execute("SELECT * FROM users WHERE username = 'admin'").fetchone()
-    if not admin_exists:
-        c.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                  ('admin', generate_password_hash('admin123'), 'admin'))
     conn.commit()
     conn.close()
 
 
+
 def get_db_connection():
+    if not os.path.exists(app.config["DATABASE"]):
+        init_db()  # Create database if it doesn’t exist
     if "db" not in g:
         g.db = sqlite3.connect(app.config["DATABASE"], check_same_thread=False)
-        g.db.row_factory = sqlite3.Row  # Return results as dicts
+        g.db.row_factory = sqlite3.Row  # Return results as dictionaries
     return g.db
+
 
 @app.teardown_appcontext
 def close_db_connection(exception):
