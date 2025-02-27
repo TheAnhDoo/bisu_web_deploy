@@ -14,7 +14,7 @@ from flask import g  # Import `g` for thread-safe DB connections
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
 #app.config['DATABASE'] = 'wallets.db'
-app.config['DATABASE'] = '/app/wallets.db'  # Use absolute path in Cloud Run
+app.config['DATABASE'] = '/data/wallets.db'  # Use Railway's persistent storage
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -48,7 +48,10 @@ def load_user(user_id):
     return None
 
 # Database setup
+import os
+
 def init_db():
+    os.makedirs("/data", exist_ok=True)  # Ensure /data exists
     conn = sqlite3.connect(app.config['DATABASE'])
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (
@@ -75,6 +78,7 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 def get_db_connection():
     if "db" not in g:
         g.db = sqlite3.connect(app.config["DATABASE"], check_same_thread=False)
@@ -89,7 +93,8 @@ def close_db_connection(exception):
 
 # Migrate Excel data to SQLite (for admin only)
 def migrate_excel_to_db():
-    if os.path.exists("wallets.xlsx"):
+    if os.path.exists("/data/wallets.xlsx"):
+
         conn = get_db_connection()
         df = pd.read_excel("wallets.xlsx")
         admin_id = conn.execute("SELECT id FROM users WHERE username = 'admin'").fetchone()['id']
